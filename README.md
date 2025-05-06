@@ -1,98 +1,147 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Task Manager Backend
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The backend for the Task Manager application, built using NestJS and Supabase. This backend is responsible for managing tasks, user authentication, and interacting with the Supabase database. It handles task creation, updating, deletion, and user authentication features.
 
-## Description
+## Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **User Authentication**: JWT-based authentication for user login and registration.
+- **Task Management**: Create, update, delete, and assign tasks to users.
+- **Task Priority & Status**: Set priorities (Low, Medium, High) and track task status (To Do, In Progress, Done).
+- **Database Integration**: Uses Supabase as a backend service for user authentication and storage.
 
-## Project setup
+## Technologies Used
 
-```bash
-$ npm install
+- **NestJS**: A progressive Node.js framework for building efficient, scalable applications.
+- **Supabase**: Open-source Firebase alternative for authentication, storage, and real-time database.
+- **PostgreSQL**: A relational database used by Supabase for storing data.
+- **JWT**: JSON Web Tokens for secure user authentication.
+
+## Installation
+
+### Prerequisites
+
+- Node.js (>= 14.0.0)
+- npm (>= 6.0.0)
+- PostgreSQL (optional, if you want to run Supabase locally)
+
+### Steps to Set Up the Project
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/rajat457/task-manager-backend.git
+   cd task-manager-backend
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Set up Supabase:
+
+   - Create a Supabase account and create a project in the Supabase dashboard.
+   - Set up the **users** and **tasks** tables as described below.
+   - Get your **Supabase URL** and **API Key** from the Supabase dashboard.
+
+4. Configure your `.env` file:
+
+   Create a `.env` file at the root of the project and include the following environment variables:
+
+   ```env
+   SUPABASE_URL=your-supabase-url
+   SUPABASE_SERVICE_KEY=your-supabase-service-key
+   JWT_SECRET=your-jwt-secret
+   ```
+
+5. Run the development server:
+
+   ```bash
+   npm run start:dev
+   ```
+
+   The backend will be available at `http://localhost:3000`.
+
+## Database Schema
+
+You will need to set up the following tables in Supabase:
+
+### Users Table (Supabase Auth for Authentication)
+
+Supabase automatically handles user authentication with their Auth API, but here’s a sample schema for the users table that tracks user creation time.
+
+```sql
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  password text not null, -- This is not required if you're using Supabase Auth
+  created_at timestamp default now()
+);
 ```
 
-## Compile and run the project
+### Tasks Table
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```sql
+create table tasks (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  due_date date,
+  priority text check(priority in ('Low', 'Medium', 'High')) default 'Medium',
+  status text check(status in ('To Do', 'In Progress', 'Done')) default 'To Do',
+  assigned_to uuid references users(id),
+  created_at timestamp default now()
+);
 ```
 
-## Run tests
+## API Endpoints
+
+### Authentication
+
+- **POST /auth/login**: User login, returns JWT token.
+  - Request Body: `{ email: string, password: string }`
+  - Response: `{ token: string }`
+
+- **POST /auth/register**: User registration.
+  - Request Body: `{ email: string, password: string }`
+  - Response: `{ message: "Registration successful" }`
+
+### Tasks
+
+- **GET /tasks**: Get all tasks for the authenticated user.
+  - Response: `[{ taskId: string, title: string, description: string, status: string, priority: string }]`
+
+- **POST /tasks**: Create a new task.
+  - Request Body: `{ title: string, description: string, due_date: string, priority: string, assigned_to: string }`
+  - Response: `{ message: "Task created successfully" }`
+
+- **PUT /tasks/:id**: Update an existing task.
+  - Request Body: `{ title: string, description: string, due_date: string, priority: string, status: string }`
+  - Response: `{ message: "Task updated successfully" }`
+
+- **DELETE /tasks/:id**: Delete a task.
+  - Response: `{ message: "Task deleted successfully" }`
+
+## JWT Authentication
+
+JWTs are used for authenticating requests to the API. Once you register or log in, a token will be issued that you must send in the `Authorization` header for all protected routes.
+
+Example of how to pass the JWT token:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+Authorization: Bearer your-jwt-token
 ```
 
-## Deployment
+## Contributing
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/feature-name`).
+3. Commit your changes (`git commit -am 'Add new feature'`).
+4. Push to the branch (`git push origin feature/feature-name`).
+5. Create a new Pull Request.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
