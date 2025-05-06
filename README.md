@@ -74,10 +74,9 @@ Supabase automatically handles user authentication with their Auth API, but here
 
 ```sql
 create table users (
-  id uuid primary key default gen_random_uuid(),
-  email text unique not null,
-  password text not null, -- This is not required if you're using Supabase Auth
-  created_at timestamp default now()
+  id uuid primary key,  -- Supabase auth will provide the user id
+  email text unique not null, -- Email will be unique from Supabase Auth
+  created_at timestamp default now() -- Created timestamp, if needed
 );
 ```
 
